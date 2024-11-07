@@ -42,7 +42,6 @@ def HRMET(datetime:pd.Timestamp, longitude:float, latitude:float, T_air:float,
     
     Python port author:
         Alexis Suero
-        North Carolina State University
         alexis.esmb@gmail.com
 
     Args:
