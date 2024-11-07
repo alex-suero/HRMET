@@ -158,24 +158,22 @@ def HRMET(datetime:pd.Timestamp, longitude:np.ndarray, latitude:np.ndarray,
     # Using only summer values here, but table also has spring/winter/fall
     # (potential future improvement- select values based on julianDay)
     def get_G_Tw(latitude):
+        if np.any((latitude<=0) | (latitude>=90)):
+            raise ValueError("Latitude values must be between 0 and 90 degrees")
+        
         # List of (latitude threshold, G_Tw value) pairs
         thresholds = [(10, 2.80), (20, 2.70), (30, 2.98),
                       (40, 2.92), (50, 2.77), (60, 2.67),
-                      (70, 2.61), (80, 2.24), (90, 1.94)]
+                      (70, 2.61), (80, 2.24), (90, 1.94)] 
         
-        # Check if latitude is within valid range
-        if np.any((latitude<=0) & (latitude>=90)):
-            raise ValueError("Latitude > 90 degrees or < 0 degrees")
-        
-        # Create G_Tw grid
         G_Tw_grid = np.full_like(latitude, np.nan)
+        mask = np.ones(latitude.shape, dtype=bool) # Start with all True
         
         # Find the appropriate G_Tw based on latitude
-        for i, (threshold, G_Tw) in enumerate(thresholds):
-            mask = (latitude<threshold if i==0 else
-                    np.bitwise_xor(latitude<threshold, mask)) 
-            G_Tw_grid[mask]= G_Tw           # Set masked grid values
-            mask = latitude<threshold       # Update mask
+        for threshold, G_Tw in thresholds:
+            G_Tw_grid[mask & (latitude<threshold)] = G_Tw
+            # Update mask only where needed
+            mask &= latitude>=threshold 
             
         return G_Tw_grid
     G_Tw = lambda: get_G_Tw(latitude)
@@ -267,7 +265,7 @@ def HRMET(datetime:pd.Timestamp, longitude:np.ndarray, latitude:np.ndarray,
         H_iter = np.full_like(T_surf, initial_h)    # placeholder for H during 
         change_perc = np.full_like(T_surf, 0.5)     # arbitrary starting value
         i = 0                                       # starting i for iterations
-        while np.any(change_perc > 0.001):
+        while np.any(np.abs(change_perc) > 0.001):
             i += 1
             
             # Calculate diabatic correction factors based on zeta. From C&N           
