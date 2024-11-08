@@ -276,7 +276,8 @@ def HRMET(datetime:pd.Timestamp, longitude:np.ndarray, latitude:np.ndarray,
                          # unstable flow, C&N equation 7.26
                          0.6*-2*np.log((1 + (1 - 16*zeta)**0.5)/2)))
             diab_H = (lambda: 
-                np.where(zeta > 0,
+                np.where(zeta > 0, 
+                         # stable flow
                          diab_M(),
                          # unstable flow, C&N equation 7.26
                          -2*np.log((1 + (1 - 16*zeta)**0.5)/2)))
@@ -301,15 +302,16 @@ def HRMET(datetime:pd.Timestamp, longitude:np.ndarray, latitude:np.ndarray,
             if i <= 2:
                 H_new = Cp * (T_surf - T_air)/r_htot()
                 H_iter = H_new.copy()
-            elif i == 10_000:
-                raise ValueError("10,000 iterations, will not converge")
-            else:
-                H_new = np.where(change_perc > 0.001,
+            elif i < 10_000:
+                H_new = np.where(np.abs(change_perc > 0.001),
                                  Cp * (T_surf - T_air)/r_htot(),
                                  H_new)
                 # Calculate the percentage change between iterations
                 change_perc = (H_new - H_iter) / H_iter
                 H_iter = H_new.copy()
+            else:
+                raise ValueError("10,000 iterations, will not converge")
+            
             # Update zeta value
             zeta = -von_karman*9.8*z_wind*H_new / (air_p()*Cp*T_air_k()*(u_star()**3))
             

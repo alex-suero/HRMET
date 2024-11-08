@@ -20,7 +20,7 @@ for precision-agriculture and drought sensitivity assessments.
 1. **Clone the repository:**
 
     ```sh
-    git clone https://github.com/alex-suero/HRMET.git
+    git clone https://github.com/alex-suero/HRMET
     cd HRMET
     ```
 
