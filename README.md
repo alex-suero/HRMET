@@ -42,7 +42,8 @@ for precision-agriculture and drought sensitivity assessments.
 - `HRMET_single.py`: this is the original HRMET code translated to Python.
 
 - `HRMET Example.ipynb`: a Python Notebook that provides an example of
-HRMET use. *(Note: data used in this notebook is not included in this repository.)*
+HRMET use. *(Note: data used in this notebook is not included in this 
+repository.)*
 
 ## Key Assumptions of HRMET
 - **Spatial Homogeneity:** HRMET calculates a 1D surface energy balance

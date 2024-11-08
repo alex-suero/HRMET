@@ -19,20 +19,20 @@ import pandas as pd
 import numpy as np
 
 def HRMET(datetime:pd.Timestamp, longitude:np.ndarray, latitude:np.ndarray, 
-          T_air:np.ndarray, SW_in:float, wind_s:float, ea:float, pa:float, z_air:float, 
-          z_wind:float, LAI:float, height:float, T_surf:float, alb_soil:float, 
-          alb_veg:float, emiss_soil:float, emiss_veg:float, daylight_savings:int=1
-          ) -> np.ndarray:
+          T_air:np.ndarray, SW_in:float, wind_s:float, ea:float, pa:float, 
+          z_air:float, z_wind:float, LAI:float, height:float, T_surf:float, 
+          alb_soil:float, alb_veg:float, emiss_soil:float, emiss_veg:float, 
+          daylight_savings:int=1) -> np.ndarray:
     """
     High Resolution Surface Energy Balance Model (HRMET)
     
-    Calculates evapotranspiration for a single point at a single instant using an energy 
-    balance approach.
+    Calculates evapotranspiration for a single point at a single instant using 
+    an energy balance approach.
     
     Original work citation:
-    Zipper, S.C. & S.P. Loheide II (2014). Using evapotranspiration to assess drought 
-    sensitivity on a subfield scale with HRMET, a high resolution surface energy balance 
-    model. Agricultural & Forest Meteorology 197: 91-102. 
+    Zipper, S.C. & S.P. Loheide II (2014). Using evapotranspiration to assess 
+    drought sensitivity on a subfield scale with HRMET, a high resolution 
+    surface energy balance model. Agricultural & Forest Meteorology 197: 91-102. 
     DOI: 10.1016/j.agrformet.2014.06.009
     
     Author:
@@ -62,8 +62,8 @@ def HRMET(datetime:pd.Timestamp, longitude:np.ndarray, latitude:np.ndarray,
         alb_veg (float): Albedo of vegetation [0-1]
         emiss_soil (float): Emissivity of soil [0-1]
         emiss_veg (float): Emissivity of vegetation [0-1]
-        daylight_savings (int, optional): daylight savings time [1=yes (summer), 0=no]. 
-            Defaults to 1.
+        daylight_savings (int, optional): daylight savings time 
+            [1=yes (summer), 0=no]. Defaults to 1.
 
     Returns:
         ET (np.ndarray): Evapotranspiration rate [mm/hr]
@@ -82,11 +82,11 @@ def HRMET(datetime:pd.Timestamp, longitude:np.ndarray, latitude:np.ndarray,
     
     # Error check: is wind measurement height < plant height?
     if z_wind < height:
-        raise ValueError(
-            "z_wind < height; provide wind speed measurement from different height")
+        raise ValueError("z_wind < height; provide wind speed measurement \
+            from different height")
     if z_air < height:
-        raise ValueError(
-            "z_air < height; provide air temperature measurement from different height")
+        raise ValueError("z_air < height; provide air temperature measurement \
+            from different height")
     
     # Ensure minimum values
     wind_s = max(0.1, wind_s)
@@ -113,8 +113,8 @@ def HRMET(datetime:pd.Timestamp, longitude:np.ndarray, latitude:np.ndarray,
     # Get datetime components
     datetime = pd.Timestamp(datetime)
     year = datetime.year
-    julian_day = datetime.timetuple().tm_yday           # julian day (Jan 1 = 1)
-    julian_time = datetime.hour + datetime.minute/60    # julian time in hours (0-24)
+    julian_day = datetime.timetuple().tm_yday         # julian day (Jan 1 = 1)
+    julian_time = datetime.hour + datetime.minute/60  # julian time (0-24)
     
     # Calculate Energy Balance
     # Solar position calculations from Campbell & Norman, chapter 11
@@ -154,12 +154,14 @@ def HRMET(datetime:pd.Timestamp, longitude:np.ndarray, latitude:np.ndarray,
     # Calculate airmass number (using Kasten and Young formula)
     # m = lambda: 1 / (cosd(zenith) + 0.50572*(96.07995 - zenith)**-1.6364)
     
-    # Look up table for G_Tw (delta) in Tw calculation, from Smith (1966) Table 1
+    # Look up table for G_Tw (delta) in Tw calculation, from Smith (1966) 
+    # Table 1
     # Using only summer values here, but table also has spring/winter/fall
     # (potential future improvement- select values based on julianDay)
     def get_G_Tw(latitude):
         if np.any((latitude<=0) | (latitude>=90)):
-            raise ValueError("Latitude values must be between 0 and 90 degrees")
+            raise ValueError("Latitude values must be between 0 and 90 \
+                degrees")
         
         # List of (latitude threshold, G_Tw value) pairs
         thresholds = [(10, 2.80), (20, 2.70), (30, 2.98),
@@ -220,10 +222,12 @@ def HRMET(datetime:pd.Timestamp, longitude:np.ndarray, latitude:np.ndarray,
     # Calculate total SWout as the sum of vegetation and soil components 
     # (two-source model)
     # Outgoing shortwave radiation from vegetation [W m-2],
-    # based on amount of SW radiation reaching ground (Norman et al. (1995) Eq. 13)
+    # based on amount of SW radiation reaching ground 
+    # (Norman et al. (1995) Eq. 13)
     SW_out_veg = lambda: SW_in*(1 - np.exp(0.9*np.log(1 - fc)))*alb_veg
     # Outgoing shortwave radiation from soil surface [W m-2], 
-    # based on amount of SW radiation reaching ground (Norman et al. (1995) Eq. 13)
+    # based on amount of SW radiation reaching ground 
+    # (Norman et al. (1995) Eq. 13)
     SW_out_soil = lambda: SW_in*np.exp(0.9*np.log(1 - fc))*alb_soil
     # Outgoing SW radiation as sum of soil and vegetation components [W m-2]
     SW_out = lambda: SW_out_veg() + SW_out_soil()
@@ -231,8 +235,8 @@ def HRMET(datetime:pd.Timestamp, longitude:np.ndarray, latitude:np.ndarray,
     # Calculate net radiation budget (R) [W m-2]
     R = SW_in - SW_out() + LW_in() - LW_out()
     
-    # Calculate Ground heat flux (G), based on the amount of radiation reaching the 
-    # ground
+    # Calculate Ground heat flux (G), based on the amount of radiation reaching 
+    # the ground
     # Eq. 13 - calculate G as 35% of R reaching soil (Norman et al., 1995)
     G = 0.35*R*np.exp(0.9*np.log(1 - fc))
     
@@ -251,7 +255,8 @@ def HRMET(datetime:pd.Timestamp, longitude:np.ndarray, latitude:np.ndarray,
     d = height * (1-(1-np.exp(-np.sqrt(cd1*LAI)))/np.sqrt(cd1*LAI))
     # Roughness length for momentum transfer [m]
     z0m = height*(1 - d/height)*np.exp(-von_karman*(1/u_uh) - sub_rough)
-    # kB^-1 factor from Bastiaansen SEBAL paper to convert from z0m to z0h kB1=2.3 
+    # kB^-1 factor from Bastiaansen SEBAL paper to convert from z0m to z0h 
+    # kB1=2.3 
     # means z0h = 0.1*z0m, which corresponds to C&N empirical equation
     kb1 = 2.3
     # Roughness length for heat transfer
@@ -259,7 +264,8 @@ def HRMET(datetime:pd.Timestamp, longitude:np.ndarray, latitude:np.ndarray,
     
     # Iterative solution to H, rH, etc
     def iterate_H(initial_zeta, initial_h):
-        # Initial stability factor for diabatic correction (zeta from C&N sec 7.5) 
+        # Initial stability factor for diabatic correction 
+        # (zeta from C&N sec 7.5) 
         # >0 when surface cooler than air
         zeta = np.full_like(T_surf, initial_zeta) 
         H_iter = np.full_like(T_surf, initial_h)    # placeholder for H during 
@@ -284,16 +290,18 @@ def HRMET(datetime:pd.Timestamp, longitude:np.ndarray, latitude:np.ndarray,
             
             # Calculate u*, gHa based on diabatic correction factors. from C&N
             # Friction velocity [m], C&N eq. 7.24
-            u_star = lambda: wind_s*von_karman / (np.log((z_wind - d)/z0m) + diab_M()) 
-            r_ha = (lambda: 1/((von_karman**2) * wind_s * air_p() / 
-                               (1.4 * 
-                                ((np.log((z_wind - d)/z0m) + diab_M()) * 
-                                 (np.log((z_air - d)/z0h) + diab_H()))))) # [m2 s mol-1]
+            u_star = lambda: wind_s*von_karman / (np.log((z_wind - d)/z0m) 
+                                                  + diab_M()) 
+            r_ha = (lambda:         # [m2 s mol-1]
+                1/((von_karman**2) * wind_s * air_p() / 
+                   (1.4 * ((np.log((z_wind - d)/z0m) + diab_M()) * 
+                           (np.log((z_air - d)/z0h) + diab_H()))))) 
             
             # By including r_excess, we can ignore the difference between 
             # T_surf and T_air
             # Excess resistance [m2 s mol-1], from Norman & Becker (1995)
-            r_excess = lambda: air_mw*np.log(z0m/z0h) / (air_p()*von_karman* u_star())
+            r_excess = lambda: air_mw*np.log(z0m/z0h) / (air_p()*von_karman* 
+                                                         u_star())
             # Total resistance [m2 s mol-1]
             r_htot = lambda: r_ha() + r_excess()
             
@@ -313,7 +321,8 @@ def HRMET(datetime:pd.Timestamp, longitude:np.ndarray, latitude:np.ndarray,
                 raise ValueError("10,000 iterations, will not converge")
             
             # Update zeta value
-            zeta = -von_karman*9.8*z_wind*H_new / (air_p()*Cp*T_air_k()*(u_star()**3))
+            zeta = -von_karman*9.8*z_wind*H_new / (air_p()*Cp*T_air_k()*
+                                                   (u_star()**3))
             
         # Final value of H after convergence
         H_new = np.where(H_new==0, 0.02, H_new)
@@ -333,7 +342,8 @@ def HRMET(datetime:pd.Timestamp, longitude:np.ndarray, latitude:np.ndarray,
     # Latent heat flux rate as residual of energy budget [W m-2]
     LE = R - G - H
     del R, G , H
-    # Latent heat of vaporization of water, dependent on temperature (°C) [J mol-1].
+    # Latent heat of vaporization of water, dependent on temperature (°C) 
+    # [J mol-1].
     # Formula B-21 from Dingman 'Physical Hydrology'
     lamda = lambda: (2.495 - (2.36e-3)*T_surf)*water_mw*1_000_000
     # Evaporation rate [mm hr-1]
